@@ -1,4 +1,6 @@
 import com.jme3.app.SimpleApplication;
+import com.jme3.bullet.BulletAppState;
+import com.jme3.bullet.control.RigidBodyControl;
 import com.jme3.collision.CollisionResult;
 import com.jme3.collision.CollisionResults;
 import com.jme3.font.BitmapText;
@@ -25,6 +27,7 @@ public class Bird extends SimpleApplication {
     private Vector3f w = null;
     private ColorRGBA color = null;
     private CollisionResult objetoActual = null;
+    private final BulletAppState fisicas = new BulletAppState();
     private final Node movibles = new Node("movibles");
     private final ActionListener listenerAccion = (accion, presionado, tpf) -> {
         if (accion.equals("Agarrar")) {
@@ -41,6 +44,7 @@ public class Bird extends SimpleApplication {
                             new ColorRGBA(color.r + d, color.g + d, color.b + d, 1));
                 } else {
                     objetoActual.getGeometry().getMaterial().setColor("Color", color);
+                    ((RigidBodyControl) objetoActual.getGeometry().getControl(0)).activate();
                     objetoActual = null;
                 }
         }
@@ -63,23 +67,27 @@ public class Bird extends SimpleApplication {
 
     @Override
     public void simpleUpdate(float tpf) {
-        if (objetoActual != null)
-            objetoActual.getGeometry().setLocalTranslation(
+        if (objetoActual != null) {
+            var rigidez = (RigidBodyControl) objetoActual.getGeometry().getControl(0);
+            rigidez.setPhysicsLocation(
                     cam.getLocation().
                             add(cam.getDirection().normalize().mult(objetoActual.getDistance())).
                             add(w));
+        }
+
     }
 
     private void initEntorno() {
+        stateManager.attach(fisicas);
         flyCam.setZoomSpeed(0);
         flyCam.setMoveSpeed(30);
         viewPort.setBackgroundColor(ColorRGBA.White);
-        movibles.attachChild(hacerCubo("tres", -2f, 3f, 1f));
-        movibles.attachChild(hacerCubo("dos", 1f, 2f, 0f));
-        movibles.attachChild(hacerCubo("uno", 0f, 1f, -2f));
-        movibles.attachChild(hacerCubo("cero", 1f, 0f, -4f));
         rootNode.attachChild(movibles);
-        rootNode.attachChild(hacerPiso());
+        hacerPiso();
+        hacerCubo("tres", -2f, 3f, 1f);
+        hacerCubo("dos", 1f, 2f, 0f);
+        hacerCubo("uno", 0f, 1f, -2f);
+        hacerCubo("cero", 1f, 0f, -4f);
     }
 
     private void initApuntador() {
@@ -105,21 +113,27 @@ public class Bird extends SimpleApplication {
         inputManager.addListener(listenerAnalogo, "Alejar");
     }
 
-    private Geometry hacerCubo(String nombre, float x, float y, float z) {
+    private void hacerCubo(String nombre, float x, float y, float z) {
         var cubo = new Geometry(nombre, new Box(1, 1, 1));
         cubo.setLocalTranslation(x, y, z);
+        var rigidezCubo = new RigidBodyControl(2f);
+        cubo.addControl(rigidezCubo);
         cubo.setMaterial(new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md") {{
             setColor("Color", ColorRGBA.randomColor());
         }});
-        return cubo;
+        movibles.attachChild(cubo);
+        fisicas.getPhysicsSpace().add(rigidezCubo);
     }
 
-    private Geometry hacerPiso() {
+    private void hacerPiso() {
         var piso = new Geometry("piso", new Box(40, .1f, 40));
         piso.setLocalTranslation(0, -4, -5);
+        var rigidezPiso = new RigidBodyControl(0);
+        piso.addControl(rigidezPiso);
         piso.setMaterial(new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md") {{
             setColor("Color", ColorRGBA.Gray);
         }});
-        return piso;
+        rootNode.attachChild(piso);
+        fisicas.getPhysicsSpace().add(rigidezPiso);
     }
 }
