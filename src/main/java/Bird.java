@@ -34,6 +34,14 @@ public class Bird extends SimpleApplication {
                     objetoActual = null;
         }
     };
+    private final AnalogListener listenerAnalogo = (String accion, float valor, float tpf) -> {
+        if (objetoActual != null) {
+            if (accion.equals("Acercar"))
+                objetoActual.setDistance(objetoActual.getDistance() - valor);
+            if (accion.equals("Alejar"))
+                objetoActual.setDistance(objetoActual.getDistance() + valor);
+        }
+    };
 
     @Override
     public void simpleInitApp() {
@@ -47,7 +55,6 @@ public class Bird extends SimpleApplication {
         if (objetoActual != null)
             objetoActual.getGeometry().setLocalTranslation(
                     cam.getLocation().add(cam.getDirection().normalize().mult(objetoActual.getDistance())));
-
     }
 
     private void initEntorno() {
@@ -76,7 +83,13 @@ public class Bird extends SimpleApplication {
         inputManager.addMapping("Agarrar",
                 new KeyTrigger(KeyInput.KEY_SPACE),
                 new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
+        inputManager.addMapping("Acercar",
+                new MouseAxisTrigger(MouseInput.AXIS_WHEEL, true));
+        inputManager.addMapping("Alejar",
+                new MouseAxisTrigger(MouseInput.AXIS_WHEEL, false));
         inputManager.addListener(listenerAccion, "Agarrar");
+        inputManager.addListener(listenerAnalogo, "Acercar");
+        inputManager.addListener(listenerAnalogo, "Alejar");
     }
 
     private Geometry hacerCubo(String nombre, float x, float y, float z) {
