@@ -21,9 +21,10 @@ public class Bird extends SimpleApplication {
     @Override
     public void simpleInitApp() {
         initEntorno();
+        initApuntador();
     }
 
-    protected void initEntorno() {
+    private void initEntorno() {
         flyCam.setZoomSpeed(0);
         flyCam.setMoveSpeed(30);
         viewPort.setBackgroundColor(ColorRGBA.White);
@@ -35,8 +36,17 @@ public class Bird extends SimpleApplication {
         rootNode.attachChild(hacerPiso());
     }
 
+    private void initApuntador() {
+        guiNode.attachChild(new BitmapText(guiFont) {{
+            setText("+");
+            setSize(40);
+            setColor(ColorRGBA.Black);
+            setLocalTranslation(settings.getWidth() / 2f - getLineWidth() / 2f,
+                    settings.getHeight() / 2f + getLineHeight() / 2f, 0);
+        }});
+    }
 
-    protected Geometry hacerCubo(String nombre, float x, float y, float z) {
+    private Geometry hacerCubo(String nombre, float x, float y, float z) {
         var cubo = new Geometry(nombre, new Box(1, 1, 1));
         cubo.setLocalTranslation(x, y, z);
         cubo.setMaterial(new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md") {{
@@ -45,7 +55,7 @@ public class Bird extends SimpleApplication {
         return cubo;
     }
 
-    protected Geometry hacerPiso() {
+    private Geometry hacerPiso() {
         var piso = new Geometry("piso", new Box(40, .1f, 40));
         piso.setLocalTranslation(0, -4, -5);
         piso.setMaterial(new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md") {{
