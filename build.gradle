@@ -1,0 +1,16 @@
+plugins {
+    id 'java'
+}
+
+group 'gamaerry'
+version '1.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.jmonkeyengine:jme3-core:3.5.2-stable'
+    implementation 'org.jmonkeyengine:jme3-desktop:3.5.2-stable'
+    implementation 'org.jmonkeyengine:jme3-lwjgl3:3.5.2-stable'
+}
