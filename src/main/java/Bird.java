@@ -8,6 +8,7 @@ import com.jme3.input.controls.*;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Ray;
+import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Box;
@@ -21,6 +22,7 @@ public class Bird extends SimpleApplication {
         app.start();
     }
 
+    private Vector3f w = null;
     private ColorRGBA color = null;
     private CollisionResult objetoActual = null;
     private final Node movibles = new Node("movibles");
@@ -31,6 +33,8 @@ public class Bird extends SimpleApplication {
             if (resultados.size() > 0)
                 if (presionado) {
                     objetoActual = resultados.getClosestCollision();
+                    w = objetoActual.getGeometry().
+                            getLocalTranslation().subtract(objetoActual.getContactPoint());
                     color = objetoActual.getGeometry().getMaterial().getParamValue("Color");
                     var d = 1 - Math.max(color.r, Math.max(color.g, color.b));
                     objetoActual.getGeometry().getMaterial().setColor("Color",
@@ -61,7 +65,9 @@ public class Bird extends SimpleApplication {
     public void simpleUpdate(float tpf) {
         if (objetoActual != null)
             objetoActual.getGeometry().setLocalTranslation(
-                    cam.getLocation().add(cam.getDirection().normalize().mult(objetoActual.getDistance())));
+                    cam.getLocation().
+                            add(cam.getDirection().normalize().mult(objetoActual.getDistance())).
+                            add(w));
     }
 
     private void initEntorno() {
