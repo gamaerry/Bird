@@ -21,20 +21,27 @@ public class Bird extends SimpleApplication {
         app.start();
     }
 
-    private CollisionResult objetoActual=null;
+    private ColorRGBA color = null;
+    private CollisionResult objetoActual = null;
     private final Node movibles = new Node("movibles");
     private final ActionListener listenerAccion = (accion, presionado, tpf) -> {
         if (accion.equals("Agarrar")) {
             var resultados = new CollisionResults();
             movibles.collideWith(new Ray(cam.getLocation(), cam.getDirection()), resultados);
             if (resultados.size() > 0)
-                if (presionado)
+                if (presionado) {
                     objetoActual = resultados.getClosestCollision();
-                else
+                    color = objetoActual.getGeometry().getMaterial().getParamValue("Color");
+                    var d = 1 - Math.max(color.r, Math.max(color.g, color.b));
+                    objetoActual.getGeometry().getMaterial().setColor("Color",
+                            new ColorRGBA(color.r + d, color.g + d, color.b + d, 1));
+                } else {
+                    objetoActual.getGeometry().getMaterial().setColor("Color", color);
                     objetoActual = null;
+                }
         }
     };
-    private final AnalogListener listenerAnalogo = (String accion, float valor, float tpf) -> {
+    private final AnalogListener listenerAnalogo = (accion, valor, tpf) -> {
         if (objetoActual != null) {
             if (accion.equals("Acercar"))
                 objetoActual.setDistance(objetoActual.getDistance() - valor);
@@ -51,7 +58,7 @@ public class Bird extends SimpleApplication {
     }
 
     @Override
-    public void simpleUpdate(float tpf){
+    public void simpleUpdate(float tpf) {
         if (objetoActual != null)
             objetoActual.getGeometry().setLocalTranslation(
                     cam.getLocation().add(cam.getDirection().normalize().mult(objetoActual.getDistance())));
