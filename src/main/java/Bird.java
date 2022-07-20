@@ -1,8 +1,13 @@
 import com.jme3.app.SimpleApplication;
+import com.jme3.collision.CollisionResult;
+import com.jme3.collision.CollisionResults;
 import com.jme3.font.BitmapText;
+import com.jme3.input.KeyInput;
+import com.jme3.input.MouseInput;
+import com.jme3.input.controls.*;
 import com.jme3.material.Material;
-import com.jme3.material.RenderState;
 import com.jme3.math.ColorRGBA;
+import com.jme3.math.Ray;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Box;
@@ -16,12 +21,33 @@ public class Bird extends SimpleApplication {
         app.start();
     }
 
-    private Node movibles = new Node("movibles");
+    private CollisionResult objetoActual=null;
+    private final Node movibles = new Node("movibles");
+    private final ActionListener listenerAccion = (accion, presionado, tpf) -> {
+        if (accion.equals("Agarrar")) {
+            var resultados = new CollisionResults();
+            movibles.collideWith(new Ray(cam.getLocation(), cam.getDirection()), resultados);
+            if (resultados.size() > 0)
+                if (presionado)
+                    objetoActual = resultados.getClosestCollision();
+                else
+                    objetoActual = null;
+        }
+    };
 
     @Override
     public void simpleInitApp() {
         initEntorno();
         initApuntador();
+        initTeclas();
+    }
+
+    @Override
+    public void simpleUpdate(float tpf){
+        if (objetoActual != null)
+            objetoActual.getGeometry().setLocalTranslation(
+                    cam.getLocation().add(cam.getDirection().normalize().mult(objetoActual.getDistance())));
+
     }
 
     private void initEntorno() {
@@ -44,6 +70,13 @@ public class Bird extends SimpleApplication {
             setLocalTranslation(settings.getWidth() / 2f - getLineWidth() / 2f,
                     settings.getHeight() / 2f + getLineHeight() / 2f, 0);
         }});
+    }
+
+    private void initTeclas() {
+        inputManager.addMapping("Agarrar",
+                new KeyTrigger(KeyInput.KEY_SPACE),
+                new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
+        inputManager.addListener(listenerAccion, "Agarrar");
     }
 
     private Geometry hacerCubo(String nombre, float x, float y, float z) {
