@@ -1,5 +1,7 @@
 import com.jme3.app.SimpleApplication;
 import com.jme3.bullet.BulletAppState;
+import com.jme3.bullet.collision.shapes.CapsuleCollisionShape;
+import com.jme3.bullet.control.CharacterControl;
 import com.jme3.bullet.control.RigidBodyControl;
 import com.jme3.collision.CollisionResult;
 import com.jme3.collision.CollisionResults;
@@ -24,6 +26,12 @@ public class Bird extends SimpleApplication {
         app.start();
     }
 
+    private final CharacterControl jugador = new CharacterControl(
+            new CapsuleCollisionShape(1.5f, 6f, 1), 0.05f);
+    private final Vector3f direccion = new Vector3f();
+    private boolean izquierda = false, derecha = false, arriba = false, abajo = false;
+    private final Vector3f tmpDireccion = new Vector3f();
+    private final Vector3f tmpIzquierda = new Vector3f();
     private Vector3f w = null;
     private ColorRGBA color = null;
     private CollisionResult objetoActual = null;
@@ -47,6 +55,23 @@ public class Bird extends SimpleApplication {
                     ((RigidBodyControl) objetoActual.getGeometry().getControl(0)).activate();
                     objetoActual = null;
                 }
+        }
+        switch (accion) {
+            case "Izquierda":
+                izquierda = presionado;
+                break;
+            case "Derecha":
+                derecha = presionado;
+                break;
+            case "Arriba":
+                arriba = presionado;
+                break;
+            case "Abajo":
+                abajo = presionado;
+                break;
+            case "Brincar":
+                if (presionado) jugador.jump();
+                break;
         }
     };
     private final AnalogListener listenerAnalogo = (accion, valor, tpf) -> {
@@ -74,7 +99,19 @@ public class Bird extends SimpleApplication {
                             add(cam.getDirection().normalize().mult(objetoActual.getDistance())).
                             add(w));
         }
-
+        cam.getDirection().mult(0.6f, tmpDireccion);
+        cam.getLeft().mult(0.4f, tmpIzquierda);
+        direccion.zero();
+        if (izquierda)
+            direccion.addLocal(tmpIzquierda);
+        if (derecha)
+            direccion.addLocal(tmpIzquierda.negate());
+        if (arriba)
+            direccion.addLocal(tmpDireccion);
+        if (abajo)
+            direccion.addLocal(tmpDireccion.negate());
+        jugador.setWalkDirection(direccion);
+        cam.setLocation(jugador.getPhysicsLocation());
     }
 
     private void initEntorno() {
@@ -83,6 +120,11 @@ public class Bird extends SimpleApplication {
         flyCam.setMoveSpeed(30);
         viewPort.setBackgroundColor(ColorRGBA.White);
         rootNode.attachChild(movibles);
+        jugador.setJumpSpeed(20);
+        jugador.setFallSpeed(30);
+        jugador.setGravity(50f); //it must be set before MOVING the physics location.
+        jugador.setPhysicsLocation(new Vector3f(0, 10, 0));
+        fisicas.getPhysicsSpace().add(jugador);
         hacerPiso();
         hacerCubo("tres", -2f, 3f, 1f);
         hacerCubo("dos", 1f, 2f, 0f);
@@ -108,9 +150,20 @@ public class Bird extends SimpleApplication {
                 new MouseAxisTrigger(MouseInput.AXIS_WHEEL, true));
         inputManager.addMapping("Alejar",
                 new MouseAxisTrigger(MouseInput.AXIS_WHEEL, false));
+        inputManager.addMapping("Izquierda", new KeyTrigger(KeyInput.KEY_A));
+        inputManager.addMapping("Derecha", new KeyTrigger(KeyInput.KEY_D));
+        inputManager.addMapping("Arriba", new KeyTrigger(KeyInput.KEY_W));
+        inputManager.addMapping("Abajo", new KeyTrigger(KeyInput.KEY_S));
+        inputManager.addMapping("Brincar", new KeyTrigger(KeyInput.KEY_LSHIFT));
+        inputManager.addMapping("Brincar", new KeyTrigger(KeyInput.KEY_RSHIFT));
         inputManager.addListener(listenerAccion, "Agarrar");
         inputManager.addListener(listenerAnalogo, "Acercar");
         inputManager.addListener(listenerAnalogo, "Alejar");
+        inputManager.addListener(listenerAccion, "Izquierda");
+        inputManager.addListener(listenerAccion, "Derecha");
+        inputManager.addListener(listenerAccion, "Arriba");
+        inputManager.addListener(listenerAccion, "Abajo");
+        inputManager.addListener(listenerAccion, "Brincar");
     }
 
     private void hacerCubo(String nombre, float x, float y, float z) {
