@@ -26,8 +26,8 @@ public class Bird extends SimpleApplication {
         app.start();
     }
 
-    private final CharacterControl jugador = new CharacterControl(
-            new CapsuleCollisionShape(1.5f, 6f, 1), 0.05f);
+    private final CharacterControl jugador =
+            new CharacterControl(new CapsuleCollisionShape(1.5f, 6f, 1), 0.05f);
     private final Vector3f direccion = new Vector3f();
     private boolean izquierda = false, derecha = false, arriba = false, abajo = false;
     private final Vector3f tmpDireccion = new Vector3f();
@@ -35,6 +35,7 @@ public class Bird extends SimpleApplication {
     private Vector3f w = null;
     private ColorRGBA color = null;
     private CollisionResult objetoActual = null;
+    private Geometry geometriaActual = null;
     private final BulletAppState fisicas = new BulletAppState();
     private final Node movibles = new Node("movibles");
     private final ActionListener listenerAccion = (accion, presionado, tpf) -> {
@@ -44,15 +45,16 @@ public class Bird extends SimpleApplication {
             if (resultados.size() > 0)
                 if (presionado) {
                     objetoActual = resultados.getClosestCollision();
-                    w = objetoActual.getGeometry().
-                            getLocalTranslation().subtract(objetoActual.getContactPoint());
-                    color = objetoActual.getGeometry().getMaterial().getParamValue("Color");
+                    geometriaActual = objetoActual.getGeometry();
+                    w = geometriaActual.getLocalTranslation().subtract(objetoActual.getContactPoint());
+                    color = geometriaActual.getMaterial().getParamValue("Color");
+                    ((RigidBodyControl) geometriaActual.getControl(0)).setKinematic(true);
                     var d = 1 - Math.max(color.r, Math.max(color.g, color.b));
-                    objetoActual.getGeometry().getMaterial().setColor("Color",
+                    geometriaActual.getMaterial().setColor("Color",
                             new ColorRGBA(color.r + d, color.g + d, color.b + d, 1));
                 } else {
-                    objetoActual.getGeometry().getMaterial().setColor("Color", color);
-                    ((RigidBodyControl) objetoActual.getGeometry().getControl(0)).activate();
+                    ((RigidBodyControl) geometriaActual.getControl(0)).setKinematic(false);
+                    geometriaActual.getMaterial().setColor("Color", color);
                     objetoActual = null;
                 }
         }
@@ -88,16 +90,15 @@ public class Bird extends SimpleApplication {
         initEntorno();
         initApuntador();
         initTeclas();
+        fisicas.setDebugEnabled(true);
     }
 
     @Override
     public void simpleUpdate(float tpf) {
         if (objetoActual != null) {
-            var rigidez = (RigidBodyControl) objetoActual.getGeometry().getControl(0);
-            rigidez.setPhysicsLocation(
-                    cam.getLocation().
-                            add(cam.getDirection().normalize().mult(objetoActual.getDistance())).
-                            add(w));
+            geometriaActual.setLocalTranslation(cam.getLocation().
+                    add(cam.getDirection().normalize().mult(objetoActual.getDistance())).
+                    add(w));
         }
         cam.getDirection().mult(0.6f, tmpDireccion);
         cam.getLeft().mult(0.4f, tmpIzquierda);
@@ -179,7 +180,7 @@ public class Bird extends SimpleApplication {
     }
 
     private void hacerPiso() {
-        var piso = new Geometry("piso", new Box(40, .1f, 40));
+        var piso = new Geometry("piso", new Box(100, .1f, 100));
         piso.setLocalTranslation(0, -4, -5);
         var rigidezPiso = new RigidBodyControl(0);
         piso.addControl(rigidezPiso);
