@@ -28,10 +28,11 @@ public class Bird extends SimpleApplication {
 
     private final CharacterControl jugador =
             new CharacterControl(new CapsuleCollisionShape(1.5f, 6f, 1), 0.05f);
-    private final Vector3f direccion = new Vector3f();
+    private final Vector3f direccionTotal = new Vector3f();
+    private final Vector3f direccionCamara = new Vector3f();
+    private final Vector3f izquierdaCamara = new Vector3f();
     private boolean izquierda = false, derecha = false, arriba = false, abajo = false;
-    private final Vector3f tmpDireccion = new Vector3f();
-    private final Vector3f tmpIzquierda = new Vector3f();
+    private boolean terceraPersona = true;
     private Vector3f w = null;
     private ColorRGBA color = null;
     private CollisionResult objetoActual = null;
@@ -58,6 +59,8 @@ public class Bird extends SimpleApplication {
                     objetoActual = null;
                 }
         }
+        if (accion.equals("Modo") && !presionado)
+            terceraPersona = !terceraPersona;
         switch (accion) {
             case "Izquierda":
                 izquierda = presionado;
@@ -95,24 +98,23 @@ public class Bird extends SimpleApplication {
 
     @Override
     public void simpleUpdate(float tpf) {
-        if (objetoActual != null) {
+        direccionCamara.set(cam.getDirection());
+        cam.getLeft().mult(0.4f, izquierdaCamara);
+        if (objetoActual != null)
             geometriaActual.setLocalTranslation(cam.getLocation().
-                    add(cam.getDirection().normalize().mult(objetoActual.getDistance())).
-                    add(w));
-        }
-        cam.getDirection().mult(0.6f, tmpDireccion);
-        cam.getLeft().mult(0.4f, tmpIzquierda);
-        direccion.zero();
+                    add(direccionCamara.mult(objetoActual.getDistance())).add(w));
         if (izquierda)
-            direccion.addLocal(tmpIzquierda);
+            direccionTotal.addLocal(izquierdaCamara);
         if (derecha)
-            direccion.addLocal(tmpIzquierda.negate());
+            direccionTotal.addLocal(izquierdaCamara.negate());
         if (arriba)
-            direccion.addLocal(tmpDireccion);
+            direccionTotal.addLocal(direccionCamara.mult(0.6f));
         if (abajo)
-            direccion.addLocal(tmpDireccion.negate());
-        jugador.setWalkDirection(direccion);
-        cam.setLocation(jugador.getPhysicsLocation());
+            direccionTotal.addLocal(direccionCamara.mult(0.6f).negate());
+        jugador.setWalkDirection(direccionTotal);
+        cam.setLocation(jugador.getPhysicsLocation().add(Vector3f.UNIT_Y).
+                add(terceraPersona ? direccionCamara.mult(17).negate() : Vector3f.ZERO));
+        direccionTotal.zero();
     }
 
     private void initEntorno() {
@@ -157,6 +159,7 @@ public class Bird extends SimpleApplication {
         inputManager.addMapping("Abajo", new KeyTrigger(KeyInput.KEY_S));
         inputManager.addMapping("Brincar", new KeyTrigger(KeyInput.KEY_LSHIFT));
         inputManager.addMapping("Brincar", new KeyTrigger(KeyInput.KEY_RSHIFT));
+        inputManager.addMapping("Modo", new KeyTrigger(KeyInput.KEY_F5));
         inputManager.addListener(listenerAccion, "Agarrar");
         inputManager.addListener(listenerAnalogo, "Acercar");
         inputManager.addListener(listenerAnalogo, "Alejar");
@@ -165,6 +168,7 @@ public class Bird extends SimpleApplication {
         inputManager.addListener(listenerAccion, "Arriba");
         inputManager.addListener(listenerAccion, "Abajo");
         inputManager.addListener(listenerAccion, "Brincar");
+        inputManager.addListener(listenerAccion, "Modo");
     }
 
     private void hacerCubo(String nombre, float x, float y, float z) {
