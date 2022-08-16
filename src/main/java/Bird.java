@@ -18,20 +18,12 @@ import com.jme3.scene.Node;
 import com.jme3.scene.shape.Box;
 
 public class Bird extends SimpleApplication {
-    public static void main(String[] args) {
-        var app = new Bird();
-        app.setDisplayFps(false);
-        app.setShowSettings(false);
-        app.setDisplayStatView(false);
-        app.start();
-    }
-
     private final CharacterControl jugador =
             new CharacterControl(new CapsuleCollisionShape(1.5f, 6f, 1), 0.05f);
     private final Vector3f direccionTotal = new Vector3f();
     private final Vector3f direccionCamara = new Vector3f();
     private final Vector3f izquierdaCamara = new Vector3f();
-    private boolean izquierda = false, derecha = false, arriba = false, abajo = false;
+    private boolean izquierda = false, derecha = false, adelante = false, atras = false;
     private boolean terceraPersona = true;
     private Vector3f w = null;
     private ColorRGBA color = null;
@@ -39,6 +31,14 @@ public class Bird extends SimpleApplication {
     private Geometry geometriaActual = null;
     private final BulletAppState fisicas = new BulletAppState();
     private final Node movibles = new Node("movibles");
+    private final AnalogListener listenerAnalogo = (accion, valor, tpf) -> {
+        if (objetoActual != null) {
+            if (accion.equals("Acercar"))
+                objetoActual.setDistance(objetoActual.getDistance() - valor);
+            if (accion.equals("Alejar"))
+                objetoActual.setDistance(objetoActual.getDistance() + valor);
+        }
+    };
     private final ActionListener listenerAccion = (accion, presionado, tpf) -> {
         if (accion.equals("Agarrar")) {
             var resultados = new CollisionResults();
@@ -69,24 +69,23 @@ public class Bird extends SimpleApplication {
                 derecha = presionado;
                 break;
             case "Arriba":
-                arriba = presionado;
+                adelante = presionado;
                 break;
             case "Abajo":
-                abajo = presionado;
+                atras = presionado;
                 break;
             case "Brincar":
                 if (presionado) jugador.jump();
                 break;
         }
     };
-    private final AnalogListener listenerAnalogo = (accion, valor, tpf) -> {
-        if (objetoActual != null) {
-            if (accion.equals("Acercar"))
-                objetoActual.setDistance(objetoActual.getDistance() - valor);
-            if (accion.equals("Alejar"))
-                objetoActual.setDistance(objetoActual.getDistance() + valor);
-        }
-    };
+    public static void main(String[] args) {
+        var app = new Bird();
+        app.setDisplayFps(false);
+        app.setShowSettings(false);
+        app.setDisplayStatView(false);
+        app.start();
+    }
 
     @Override
     public void simpleInitApp() {
@@ -107,11 +106,12 @@ public class Bird extends SimpleApplication {
             direccionTotal.addLocal(izquierdaCamara);
         if (derecha)
             direccionTotal.addLocal(izquierdaCamara.negate());
-        if (arriba)
+        if (adelante)
             direccionTotal.addLocal(direccionCamara.mult(0.6f));
-        if (abajo)
+        if (atras)
             direccionTotal.addLocal(direccionCamara.mult(0.6f).negate());
-        jugador.setWalkDirection(direccionTotal);
+        //jugador.setWalkDirection(direccionTotal);
+        jugador.setWalkDirection(new Vector3f(direccionTotal.x, 0, direccionTotal.z));
         cam.setLocation(jugador.getPhysicsLocation().add(Vector3f.UNIT_Y).
                 add(terceraPersona ? direccionCamara.mult(17).negate() : Vector3f.ZERO));
         direccionTotal.zero();
@@ -155,8 +155,8 @@ public class Bird extends SimpleApplication {
                 new MouseAxisTrigger(MouseInput.AXIS_WHEEL, false));
         inputManager.addMapping("Izquierda", new KeyTrigger(KeyInput.KEY_A));
         inputManager.addMapping("Derecha", new KeyTrigger(KeyInput.KEY_D));
-        inputManager.addMapping("Arriba", new KeyTrigger(KeyInput.KEY_W));
-        inputManager.addMapping("Abajo", new KeyTrigger(KeyInput.KEY_S));
+        inputManager.addMapping("Adelante", new KeyTrigger(KeyInput.KEY_W));
+        inputManager.addMapping("Atras", new KeyTrigger(KeyInput.KEY_S));
         inputManager.addMapping("Brincar", new KeyTrigger(KeyInput.KEY_LSHIFT));
         inputManager.addMapping("Brincar", new KeyTrigger(KeyInput.KEY_RSHIFT));
         inputManager.addMapping("Modo", new KeyTrigger(KeyInput.KEY_F5));
