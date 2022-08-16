@@ -24,7 +24,8 @@ public class Bird extends SimpleApplication {
     private final Vector3f direccionCamara = new Vector3f();
     private final Vector3f izquierdaCamara = new Vector3f();
     private boolean izquierda = false, derecha = false, adelante = false, atras = false;
-    private boolean terceraPersona = true;
+    private boolean terceraPersona = false;
+    private int cantidadCubos = 0;
     private Vector3f w = null;
     private ColorRGBA color = null;
     private CollisionResult objetoActual = null;
@@ -59,6 +60,8 @@ public class Bird extends SimpleApplication {
                     objetoActual = null;
                 }
         }
+        if (accion.equals("Crear") && !presionado)
+            hacerCubo(0, 0, 0);
         if (accion.equals("Modo") && !presionado)
             terceraPersona = !terceraPersona;
         switch (accion) {
@@ -68,10 +71,10 @@ public class Bird extends SimpleApplication {
             case "Derecha":
                 derecha = presionado;
                 break;
-            case "Arriba":
+            case "Adelante":
                 adelante = presionado;
                 break;
-            case "Abajo":
+            case "Atras":
                 atras = presionado;
                 break;
             case "Brincar":
@@ -129,10 +132,10 @@ public class Bird extends SimpleApplication {
         jugador.setPhysicsLocation(new Vector3f(0, 10, 0));
         fisicas.getPhysicsSpace().add(jugador);
         hacerPiso();
-        hacerCubo("tres", -2f, 3f, 1f);
-        hacerCubo("dos", 1f, 2f, 0f);
-        hacerCubo("uno", 0f, 1f, -2f);
-        hacerCubo("cero", 1f, 0f, -4f);
+        hacerCubo(-2f, 3f, 1f);
+        hacerCubo(1f, 2f, 0f);
+        hacerCubo(0f, 1f, -2f);
+        hacerCubo(1f, 0f, -4f);
     }
 
     private void initApuntador() {
@@ -160,19 +163,21 @@ public class Bird extends SimpleApplication {
         inputManager.addMapping("Brincar", new KeyTrigger(KeyInput.KEY_LSHIFT));
         inputManager.addMapping("Brincar", new KeyTrigger(KeyInput.KEY_RSHIFT));
         inputManager.addMapping("Modo", new KeyTrigger(KeyInput.KEY_F5));
+        inputManager.addMapping("Crear", new KeyTrigger(KeyInput.KEY_C));
         inputManager.addListener(listenerAccion, "Agarrar");
         inputManager.addListener(listenerAnalogo, "Acercar");
         inputManager.addListener(listenerAnalogo, "Alejar");
         inputManager.addListener(listenerAccion, "Izquierda");
         inputManager.addListener(listenerAccion, "Derecha");
-        inputManager.addListener(listenerAccion, "Arriba");
-        inputManager.addListener(listenerAccion, "Abajo");
+        inputManager.addListener(listenerAccion, "Adelante");
+        inputManager.addListener(listenerAccion, "Atras");
         inputManager.addListener(listenerAccion, "Brincar");
         inputManager.addListener(listenerAccion, "Modo");
+        inputManager.addListener(listenerAccion, "Crear");
     }
 
-    private void hacerCubo(String nombre, float x, float y, float z) {
-        var cubo = new Geometry(nombre, new Box(1, 1, 1));
+    private void hacerCubo(float x, float y, float z) {
+        var cubo = new Geometry("cubo"+cantidadCubos++, new Box(1, 1, 1));
         cubo.setLocalTranslation(x, y, z);
         var rigidezCubo = new RigidBodyControl(2f);
         cubo.addControl(rigidezCubo);
